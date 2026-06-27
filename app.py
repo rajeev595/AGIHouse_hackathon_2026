@@ -3,11 +3,18 @@ Streamlit dashboard — run with: streamlit run app.py
 
 Shows the agent running live and the audit log in real time.
 """
+from dotenv import load_dotenv
+load_dotenv()  # must run before any import that creates openai.OpenAI()
+
+import os
+from datetime import datetime
 import streamlit as st
 import sqlite3
 import json
 import threading
 import time
+
+os.makedirs("audits", exist_ok=True)
 
 st.set_page_config(page_title="Chief of Staff — Identity Demo", layout="wide")
 
@@ -74,8 +81,10 @@ if run_btn:
 
     plan_box.json(plan)
 
-    audit = AuditLog("audit.db")
-    audit.clear()
+    mode_tag = "attack" if attack_mode else "normal"
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    db_path = f"audits/{mode_tag}_{ts}.db"
+    audit = AuditLog(db_path)
     gate = Gatekeeper(task=TASK, plan=plan, audit=audit)
 
     result_holder: dict = {}

@@ -7,6 +7,8 @@ Usage:
 """
 import sys
 import json
+import os
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()  # must run before any module that creates openai.OpenAI()
 
@@ -14,6 +16,8 @@ from planner import generate_plan
 from gatekeeper import Gatekeeper
 from agent import run_agent
 from audit import AuditLog
+
+os.makedirs("audits", exist_ok=True)
 
 TASK = (
     "Clear my schedule for next week and send a short apology email "
@@ -45,7 +49,10 @@ def main(attack_mode: bool = False):
 
     # Step 2 — set up audit log + gatekeeper
     mode_tag = "attack" if attack_mode else "normal"
-    audit = AuditLog(f"audit_{mode_tag}.db")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    db_path = f"audits/{mode_tag}_{ts}.db"
+    audit = AuditLog(db_path)
+    print(f"Audit log: {db_path}")
     gate = Gatekeeper(task=TASK, plan=plan, audit=audit)
 
     # Step 3 — run child agent
